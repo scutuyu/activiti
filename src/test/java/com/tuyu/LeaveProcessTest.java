@@ -2,10 +2,15 @@ package com.tuyu;
 
 import com.tuyu.util.ResourceUtil;
 import org.activiti.engine.*;
+import org.activiti.engine.history.HistoricIdentityLink;
 import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.history.HistoricTaskInstance;
 import org.activiti.engine.history.HistoricVariableInstance;
+import org.activiti.engine.impl.persistence.entity.IdentityLinkEntity;
+import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntity;
+import org.activiti.engine.impl.pvm.process.ActivityImpl;
 import org.activiti.engine.repository.Deployment;
+import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
@@ -51,7 +56,7 @@ public class LeaveProcessTest {
      */
     @Test
     public void testDeploy() {
-        deploy("请假流程");
+        deploy("请假流程5.18.0");// 6.0.0.4
     }
 
     // 资源文件
@@ -113,7 +118,7 @@ public class LeaveProcessTest {
         RuntimeService runtimeService = processEngine.getRuntimeService(); // 与正在执行的流程实例和执行对象相关的service
         String processDefineKey = "leaveProcess"; // 流程定义文件中的id属性值
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(processDefineKey);// 使用流程定义的key启动流程实例，默认按照最新版本的流程定义启动
-        printProcessInstance(processInstance);
+        printProcessInstance(processInstance); // process instance id 77501
 
     }
 
@@ -122,6 +127,19 @@ public class LeaveProcessTest {
                 + "\nprocess instance id " + processInstance.getId() // process instance id = 30001
                 + "\nprocess define id : " + processInstance.getProcessDefinitionId()
                 + "\nprocess define name : " + processInstance.getProcessDefinitionName());
+    }
+
+    /**
+     * 查询所有正在运行的流程实例
+     */
+    @Test
+    public void testAllProcessInstall() {
+        RuntimeService runtimeService = processEngine.getRuntimeService();
+        List<ProcessInstance> list = runtimeService.createProcessInstanceQuery()
+                .list();
+        for (ProcessInstance instance : list){
+            printProcessInstance(instance);
+        }
     }
 
     /**
@@ -135,19 +153,49 @@ public class LeaveProcessTest {
 //        String assignee = "王五";
         List<Task> list = taskService.createTaskQuery() // 创建任务查询对象
                 // 查询条件，where条件
-                .taskCandidateOrAssigned(assignee) // 指定个人任务查询，指定办理人
+//                .taskCandidateOrAssigned(assignee) // 指定个人任务查询，指定办理人
+//                .taskAssignee(assignee)
                 // 返回结果集
                 .list();
         if (list != null && list.size() > 0){
-            for (Task task : list)
-                System.out.println(signal + "\ntask id : " + task.getId()
-                        + "\ntask name : " + task.getName()
-                        + "\ntask create time : " + task.getCreateTime()
-                        + "\ntask assignee : " + task.getAssignee()
-                        + "\nprocess instance id : " + task.getProcessInstanceId()
-                        + "\nexecution id : " + task.getExecutionId()
-                        + "\ninstance define id : " + task.getProcessDefinitionId());
+            for (Task task : list){
+                printTask(task);
+            }
         }
+    }
+
+    protected void printTask(Task task){
+        System.out.println(signal + "\ntask id : " + task.getId()
+                + "\ntask name : " + task.getName()
+                + "\ntask create time : " + task.getCreateTime()
+                + "\ntask assignee : " + task.getAssignee()
+                + "\nprocess instance id : " + task.getProcessInstanceId()
+                + "\nexecution id : " + task.getExecutionId()
+                + "\ninstance define id : " + task.getProcessDefinitionId());
+    }
+
+    /**
+     * 根据流程实例查询任务
+     */
+    @Test
+    public void testQueryCurrentTask() {
+        TaskService taskService = processEngine.getTaskService();
+        Task task1 = taskService.createTaskQuery()
+                .processInstanceId("5001") // 2501  5001
+                .singleResult();
+        printTask(task1);
+//        RuntimeService runtimeService = processEngine.getRuntimeService();
+//        ProcessInstance instance = runtimeService.createProcessInstanceQuery()
+//                .processInstanceId(task1.getProcessInstanceId())
+//                .singleResult();
+//        printProcessInstance(instance);
+//        String activityId = instance.getActivityId();
+//        System.out.println(signal + activityId);
+        RepositoryService repositoryService = processEngine.getRepositoryService();
+        ProcessDefinition definition = repositoryService.getProcessDefinition(task1.getProcessDefinitionId());
+        ProcessDefinitionEntity entity = (ProcessDefinitionEntity) definition;
+        ActivityImpl activity = entity.findActivity(task1.getTaskDefinitionKey());
+        System.out.println(signal + activity);
     }
 
     /**
@@ -168,9 +216,22 @@ public class LeaveProcessTest {
 //        String taskId = "12502";
 //        String taskId = "37505";
 //        String taskId = "40002";
-        String taskId = "42502";
+        String taskId = "15002";
         taskService.complete(taskId);
         System.out.println(signal + "\ncomplete task, id is " + taskId);
+    }
+
+    /**
+     * 查询所有正在执行的流程实例
+     */
+    @Test
+    public void testAllRunningProcessInstance() {
+        RuntimeService runtimeService = processEngine.getRuntimeService();
+        List<ProcessInstance> list = runtimeService.createProcessInstanceQuery()
+                .list();
+        for (ProcessInstance instance : list){
+            printProcessInstance(instance);
+        }
     }
 
     /**
@@ -198,12 +259,23 @@ public class LeaveProcessTest {
         HistoryService historyService = processEngine.getHistoryService(); // 与历史相关的数据
         String assignee = "张三";
         List<HistoricTaskInstance> list = historyService.createHistoricTaskInstanceQuery()
-                .taskAssignee(assignee)
+//                .taskAssignee(assignee)
+//                .taskOwner(assignee)
+//                .taskCandidateUser(assignee)
                 .list();
-        if (list != null && list.size() > 0){
-            for(HistoricTaskInstance instance : list){
-                printHistoryTask(instance);
-            }
+//        if (list != null && list.size() > 0){
+//            for(HistoricTaskInstance instance : list){
+//                printHistoryTask(instance);
+//            }
+//        }
+
+        String processInstanceId = "2501";
+        List<HistoricIdentityLink> list1 = historyService.getHistoricIdentityLinksForProcessInstance(processInstanceId);
+        for (HistoricIdentityLink  link : list1){
+            System.out.println(signal + "\nuserId : " + link.getUserId()
+            + "\ntask type : " + link.getType()
+            + "\ntask id : " + link.getTaskId()
+            + "\nprocess instance id : " + link.getProcessInstanceId());
         }
 
     }

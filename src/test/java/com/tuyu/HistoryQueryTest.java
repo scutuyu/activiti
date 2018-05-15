@@ -52,11 +52,29 @@ public class HistoryQueryTest extends LeaveProcessTest {
         HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
                 .processInstanceId(processInstanceId)
                 .singleResult();
-        System.out.println(signal + "\nprocess define id : " + historicProcessInstance.getProcessDefinitionId()
-        + "\nprocess instance start time : " + historicProcessInstance.getStartTime()
-        + "\nprocess instance end time : " + historicProcessInstance.getEndTime()
-        + "\nprocess instance duration : " + historicProcessInstance.getDurationInMillis());
+        printHistoryProcessInstance(historicProcessInstance);
 
+    }
+
+    protected void printHistoryProcessInstance(HistoricProcessInstance historicProcessInstance){
+        System.out.println(signal + "\nprocess define id : " + historicProcessInstance.getProcessDefinitionId()
+                + "\nprocess instance id : " + historicProcessInstance.getId()
+                + "\nprocess instance start time : " + historicProcessInstance.getStartTime()
+                + "\nprocess instance end time : " + historicProcessInstance.getEndTime()
+                + "\nprocess instance duration : " + historicProcessInstance.getDurationInMillis());
+    }
+
+    /**
+     * 查询所有历史流程实例
+     */
+    @Test
+    public void testAllHistoryProcessInstance() {
+        HistoryService historyService = processEngine.getHistoryService();
+        List<HistoricProcessInstance> list = historyService.createHistoricProcessInstanceQuery()
+                .list();
+        for (HistoricProcessInstance instance : list){
+            printHistoryProcessInstance(instance);
+        }
     }
 
     /**
