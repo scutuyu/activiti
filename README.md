@@ -73,11 +73,100 @@ select * from act_hi_varinst;
 3. 动态指定任务的办理人
 
 ## 设置流程变量的方式
-1. 调用`RuntimeService`的`setVariable`方法或者`setVariables`方法
-2. 调用`TaskService`的`setVariable`方法或者`setVariables`方法
-3. 调用`RunTimeServie`的`startProcessInstanceByKey`方法在启动流程实例时设置流程变量
-4. 调用`TaskService`的`complete`方法设置流程变量
+```
+RunTimeService.setVariables(executionId, map)
+RunTimeService.startProcessInstanceByKey(processDefineKey,map)
+TaskService.setVariables(taskId, map)
+TaskService.complete(taskId, map)
+```
+setVariables方法可以替换为setVariable方法，区别是：前者保存单个变量，后者通过传入一个Map保存多个变量
+
+## 设置任务变量
+```
+RunTimeService.setVariablesLocal(executionId, map)
+TaskService.setVariablesLocal(taskId, map)
+```
+setVariables方法可以替换为setVariable方法，区别是：前者保存单个变量，后者通过传入一个Map保存多个变量
+
+**注意**
+我用的Activiti版本是5.18.0
+测试了`RunTimeService.setVariablesLocal(executionId, map)`和`RunTimeService.setVariables(executionId, map)`
+发现他们的表现是一样的都是设置流程变量，在整个流程执行过程中都可以访问到
+下面是我的测试过程：
+```java
+public class VariableTest{
+    @Test
+    public void testSetVariables(){
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", "keen");
+        String executionId = "25001";
+        RuntimeService runtimeService = processEngine.getRuntimeService(); // 先设置流程变量
+        runtimeService.setVariables(executionId, map);
+        
+        map.clear();
+        map.put("age", "12");
+        runtimeService.setVariablesLocal(executionId, map); // 在设置任务变量
+    }
+}
+```
+观察控制台输出的sql语句
+```log
+03:30:06,090 [main] DEBUG org.activiti.engine.impl.persistence.entity.HistoricVariableInstanceEntity.insertHistoricVariableInstance  - ooo Using Connection [com.mysql.jdbc.JDBC4Connection@536dbea0]
+03:30:06,090 [main] DEBUG org.activiti.engine.impl.persistence.entity.HistoricVariableInstanceEntity.insertHistoricVariableInstance  - ==>  Preparing: insert into ACT_HI_VARINST (ID_, PROC_INST_ID_, EXECUTION_ID_, TASK_ID_, NAME_, REV_, VAR_TYPE_, BYTEARRAY_ID_, DOUBLE_, LONG_ , TEXT_, TEXT2_, CREATE_TIME_, LAST_UPDATED_TIME_) values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ) 
+03:30:06,092 [main] DEBUG org.activiti.engine.impl.persistence.entity.HistoricVariableInstanceEntity.insertHistoricVariableInstance  - ==> Parameters: 35001(String), 25001(String), 25001(String), null, name(String), 0(Integer), string(String), null, null, null, keen(String), null, 2018-05-16 15:30:06.087(Timestamp), 2018-05-16 15:30:06.087(Timestamp)
+03:30:06,093 [main] DEBUG org.activiti.engine.impl.persistence.entity.HistoricVariableInstanceEntity.insertHistoricVariableInstance  - <==    Updates: 1
+
+03:30:06,093 [main] DEBUG org.activiti.engine.impl.persistence.entity.VariableInstanceEntity.insertVariableInstance  - ==>  Preparing: insert into ACT_RU_VARIABLE (ID_, REV_, TYPE_, NAME_, PROC_INST_ID_, EXECUTION_ID_, TASK_ID_, BYTEARRAY_ID_, DOUBLE_, LONG_ , TEXT_, TEXT2_) values ( ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ) 
+03:30:06,094 [main] DEBUG org.activiti.engine.impl.persistence.entity.VariableInstanceEntity.insertVariableInstance  - ==> Parameters: 35001(String), string(String), name(String), 25001(String), 25001(String), null, null, null, null, keen(String), null
+03:30:06,095 [main] DEBUG org.activiti.engine.impl.persistence.entity.VariableInstanceEntity.insertVariableInstance  - <==    Updates: 1
+
+03:30:06,103 [main] DEBUG org.activiti.engine.impl.persistence.entity.HistoricVariableInstanceEntity.insertHistoricVariableInstance  - ==>  Preparing: insert into ACT_HI_VARINST (ID_, PROC_INST_ID_, EXECUTION_ID_, TASK_ID_, NAME_, REV_, VAR_TYPE_, BYTEARRAY_ID_, DOUBLE_, LONG_ , TEXT_, TEXT2_, CREATE_TIME_, LAST_UPDATED_TIME_) values ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ) 
+03:30:06,104 [main] DEBUG org.activiti.engine.impl.persistence.entity.HistoricVariableInstanceEntity.insertHistoricVariableInstance  - ==> Parameters: 35002(String), 25001(String), 25001(String), null, age(String), 0(Integer), string(String), null, null, null, 12(String), null, 2018-05-16 15:30:06.102(Timestamp), 2018-05-16 15:30:06.102(Timestamp)
+03:30:06,104 [main] DEBUG org.activiti.engine.impl.persistence.entity.HistoricVariableInstanceEntity.insertHistoricVariableInstance  - <==    Updates: 1
+
+03:30:06,105 [main] DEBUG org.activiti.engine.impl.persistence.entity.VariableInstanceEntity.insertVariableInstance  - ==>  Preparing: insert into ACT_RU_VARIABLE (ID_, REV_, TYPE_, NAME_, PROC_INST_ID_, EXECUTION_ID_, TASK_ID_, BYTEARRAY_ID_, DOUBLE_, LONG_ , TEXT_, TEXT2_) values ( ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ) 
+03:30:06,105 [main] DEBUG org.activiti.engine.impl.persistence.entity.VariableInstanceEntity.insertVariableInstance  - ==> Parameters: 35002(String), string(String), age(String), 25001(String), 25001(String), null, null, null, null, 12(String), null
+03:30:06,106 [main] DEBUG org.activiti.engine.impl.persistence.entity.VariableInstanceEntity.insertVariableInstance  - <==    Updates: 1
+```
+从日志中的6条sql日志可以看出，前两条sql是将name=keen变量分别保存到act_hi_varinst表和act_ru_variable表，后两条sql是将age=12变量保存到act_hi_varinst表和act_ru_variable表，从他们传递的参数来看，task_id字段的值都是`null`,
+这说明不过调用`RunTimeService.setVariablesLocal(executionId, map)`方法还是调用`RunTimeService.setVariables(executionId, map)`方法，都是一样的处理，这一点可以通过查询接口API得到验证：
+```java
+public class VariableTest{
+    @Test
+    public void testGetVariables(){
+        RuntimeService runtimeService = processEngine.getRuntimeService();
+        String executionId = "25001";
+        Map<String, Object> variables = runtimeService.getVariables(executionId);
+        Map<String, Object> variablesLocal = runtimeService.getVariablesLocal(executionId);
+        System.out.println("" + variables);
+        System.out.println(signal + variablesLocal);
+    }
+}
+```
+在控制台打印sql日志：
+```log
+03:39:04,222 [main] DEBUG org.activiti.engine.impl.persistence.entity.VariableInstanceEntity.selectVariablesByExecutionId  - ==>  Preparing: select * from ACT_RU_VARIABLE where EXECUTION_ID_ = ? and TASK_ID_ is null 
+03:39:04,222 [main] DEBUG org.activiti.engine.impl.persistence.entity.VariableInstanceEntity.selectVariablesByExecutionId  - ==> Parameters: 25001(String)
+03:39:04,225 [main] DEBUG org.activiti.engine.impl.persistence.entity.VariableInstanceEntity.selectVariablesByExecutionId  - <==      Total: 6
+
+03:39:04,239 [main] DEBUG org.activiti.engine.impl.persistence.entity.VariableInstanceEntity.selectVariablesByExecutionId  - ==>  Preparing: select * from ACT_RU_VARIABLE where EXECUTION_ID_ = ? and TASK_ID_ is null 
+03:39:04,240 [main] DEBUG org.activiti.engine.impl.persistence.entity.VariableInstanceEntity.selectVariablesByExecutionId  - ==> Parameters: 25001(String)
+03:39:04,243 [main] DEBUG org.activiti.engine.impl.persistence.entity.VariableInstanceEntity.selectVariablesByExecutionId  - <==      Total: 6
+
+------------> {sourceId=1002, leave reason=想睡觉, leave days=20, name=keen, person info=Person{id=10, name='scutuyu'}, age=12}
+------------> {sourceId=1002, leave reason=想睡觉, leave days=20, name=keen, person info=Person{id=10, name='scutuyu'}, age=12}
+```
+从日志可以看出，不管是通过`runtimeService.getVariables(executionId)`还是`runtimeService.getVariablesLocal(executionId)`去查询变量，得到的都是一样的
+按道理前者应该能查出age变量，后者能查出name变量和age变量，因为在在保存时，age变量调用的是`RunTimeService.setVariablesLocal(executionId, map)`,name变量调用的是`RunTimeService.setVariables(executionId, map)`
 
 ## 获取流程变量
-1. 调用`RuntimeService`的`getVariable`方法或者`getVariables`方法
-2. 调用`RunTimeServie`的`getVariable`方法或者`getVariables`方法
+```
+TaskService.getVariables(taskId)
+RuntimeService.getVariables(executionId)
+```
+
+## 获取任务变量
+
+```
+TaskService.getVariablesLocal(taskId)
+```

@@ -35,12 +35,12 @@ import java.util.List;
  * ////////////////////////////////////////////////////////////////////
  * </pre>
  * tuyu于5/13/18祈祷...
- *
+ * 查询工作流历史信息
  * @author tuyu
  * @date 5/13/18
  * Stay Hungry, Stay Foolish.
  */
-public class HistoryQueryTest extends LeaveProcessTest {
+public class HistoryQueryTest extends BaseTest {
 
     /**
      * 查询历史流程实例
@@ -54,14 +54,6 @@ public class HistoryQueryTest extends LeaveProcessTest {
                 .singleResult();
         printHistoryProcessInstance(historicProcessInstance);
 
-    }
-
-    protected void printHistoryProcessInstance(HistoricProcessInstance historicProcessInstance){
-        System.out.println(signal + "\nprocess define id : " + historicProcessInstance.getProcessDefinitionId()
-                + "\nprocess instance id : " + historicProcessInstance.getId()
-                + "\nprocess instance start time : " + historicProcessInstance.getStartTime()
-                + "\nprocess instance end time : " + historicProcessInstance.getEndTime()
-                + "\nprocess instance duration : " + historicProcessInstance.getDurationInMillis());
     }
 
     /**
@@ -103,7 +95,7 @@ public class HistoryQueryTest extends LeaveProcessTest {
      * 查询历史任务
      */
     @Test
-    public void testQueryHistoryTask() {
+    public void testQueryHistoryTaskByProcessInstance() {
         HistoryService historyService = processEngine.getHistoryService();
         String processInstanceId = "60001";
         List<HistoricTaskInstance> list = historyService.createHistoricTaskInstanceQuery()
@@ -112,6 +104,35 @@ public class HistoryQueryTest extends LeaveProcessTest {
         for (HistoricTaskInstance instance : list){
             printHistoryTask(instance);
         }
+    }
+
+    /**
+     * 查询历史任务
+     */
+    @Test
+    public void testQueryHistoryTaskByAssignee() {
+        HistoryService historyService = processEngine.getHistoryService(); // 与历史相关的数据
+        String assignee = "张三";
+        List<HistoricTaskInstance> list = historyService.createHistoricTaskInstanceQuery()
+                .taskAssignee(assignee)
+//                .taskOwner(assignee)
+//                .taskCandidateUser(assignee)
+                .list();
+        if (list != null && list.size() > 0){
+            for(HistoricTaskInstance instance : list){
+                printHistoryTask(instance);
+            }
+        }
+
+//        String processInstanceId = "2501";
+//        List<HistoricIdentityLink> list1 = historyService.getHistoricIdentityLinksForProcessInstance(processInstanceId);
+//        for (HistoricIdentityLink  link : list1){
+//            System.out.println(signal + "\nuserId : " + link.getUserId()
+//            + "\ntask type : " + link.getType()
+//            + "\ntask id : " + link.getTaskId()
+//            + "\nprocess instance id : " + link.getProcessInstanceId());
+//        }
+
     }
 
     /**

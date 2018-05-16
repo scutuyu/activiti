@@ -119,7 +119,7 @@ public class ProcessDefineTest extends LeaveProcessTest {
     public void testQueryDiagram() {
         RepositoryService repositoryService = processEngine.getRepositoryService();
         // 将图片放到文件夹下
-        String deploymentId = "32501";
+        String deploymentId = "22501";
         String fileName = "";
         List<String> names = repositoryService.getDeploymentResourceNames(deploymentId);
         for (String name : names){

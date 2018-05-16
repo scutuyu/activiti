@@ -22,33 +22,21 @@ import java.util.List;
 import java.util.zip.ZipInputStream;
 
 /**
+ * 请假流程测试类
+ * <p>测试步骤</p>
+ * <ul>
+ *     <li>构建流程引擎（测试基类中已经完成）</li>
+ *     <li>发布流程定义（测试基类中提供了3中发布方式）</li>
+ *     <li>启动流程实例</li>
+ *     <li>查询任务（可以按人查，也可以按流程实例查）</li>
+ *     <li>完成任务</li>
+ *     <li>该流程实例运行完成</li>
+ * </ul>
  * @author tuyu
  * @date 5/11/18
  * Stay Hungry, Stay Foolish.
  */
-public class LeaveProcessTest {
-
-    ProcessEngine processEngine;
-
-    protected static final String signal = "------------> ";
-
-    @Before
-    public void before(){
-        testBuildProcessEngine();
-    }
-
-    @Test
-    public void testBuildProcessEngine() {
-        processEngine = ProcessEngineConfiguration
-                .createStandaloneProcessEngineConfiguration()
-                .setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE)
-                .setJdbcUrl("jdbc:mysql://localhost:3306/activiti?useUnicode=true&characterEncoding=UTF-8")
-                .setJdbcDriver("com.mysql.jdbc.Driver")
-                .setJdbcUsername("root")
-                .setJdbcPassword("123456")
-                .buildProcessEngine();
-        System.out.println(signal + "process engine : " + processEngine);
-    }
+public class LeaveProcessTest extends BaseTest{
 
     /**
      * 部署流程定义
@@ -56,57 +44,12 @@ public class LeaveProcessTest {
      */
     @Test
     public void testDeploy() {
+        // 通过资源文件部署
         deploy("请假流程5.18.0");// 6.0.0.4
-    }
-
-    // 资源文件
-    protected void deploy(String name){
-        RepositoryService repositoryService = processEngine.getRepositoryService(); // repositoryService 与流程定义和部署相关的service
-        if (name == null || "".equals(name)){
-            name = "请假流程";
-        }
-        Deployment deploy = repositoryService.createDeployment() // 创建部署对象
-                .name(name) // 添加部署对象
-                .addClasspathResource("leave.bpmn") // 加载资源， 当流程定义的key值相同，则版本升级
-                .addClasspathResource("leave.png") // 加载资源，如果没有加载图片，那么将会自动生成图片存在数据库
-                .deploy(); // 完成部署
-        System.out.println(signal + "\nprocess define id : " + deploy.getId()
-                + "\nprocess define name : " + deploy.getName());
-    }
-
-    // zip格式文件
-    protected void deployZip(String name){
-        RepositoryService repositoryService = processEngine.getRepositoryService(); // repositoryService 与流程定义和部署相关的service
-        if (name == null || "".equals(name)){
-            name = "请假流程";
-        }
-        InputStream inputStream = ResourceUtil.getInputString(this.getClass(), "leave.zip");
-        ZipInputStream zipInputStream = new ZipInputStream(inputStream);
-        Deployment deploy = repositoryService.createDeployment() // 创建部署对象
-                .name(name) // 添加部署对象
-                .addZipInputStream(zipInputStream)
-                .deploy(); // 完成部署
-        System.out.println(signal + "\nprocess define id : " + deploy.getId()
-                + "\nprocess define name : " + deploy.getName());
-    }
-
-    // inputStream资源文件
-    protected void deployInputStream(String name){
-        RepositoryService repositoryService = processEngine.getRepositoryService(); // repositoryService 与流程定义和部署相关的service
-        if (name == null || "".equals(name)){
-            name = "请假流程";
-        }
-        String bpmn = "leave.bpmn";
-        String png = "leave.png";
-        InputStream inputStreamBpmn = ResourceUtil.getInputString(this.getClass(), bpmn);
-        InputStream inputStreamPng = ResourceUtil.getInputString(this.getClass(), png);
-        Deployment deploy = repositoryService.createDeployment() // 创建部署对象
-                .name(name) // 添加部署对象
-                .addInputStream(bpmn, inputStreamBpmn) // 使用资源文件名称（要求与资源文件的名称一致）和输入流完成部署
-                .addInputStream(png, inputStreamPng) // 使用资源文件名称和输入流完成部署
-                .deploy(); // 完成部署
-        System.out.println(signal + "\nprocess define id : " + deploy.getId()
-                + "\nprocess define name : " + deploy.getName());
+        // 通过zip压缩包加载，压缩包中包含了bpmn文件和png图片
+//        deployZip("zip流程部署");
+        // 通过inputStream流夹部署
+//        deployInputStream("inputStream流部署");
     }
 
     /**
@@ -120,13 +63,6 @@ public class LeaveProcessTest {
         ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(processDefineKey);// 使用流程定义的key启动流程实例，默认按照最新版本的流程定义启动
         printProcessInstance(processInstance); // process instance id 77501
 
-    }
-
-    protected void printProcessInstance(ProcessInstance processInstance){
-        System.out.println(signal
-                + "\nprocess instance id " + processInstance.getId() // process instance id = 30001
-                + "\nprocess define id : " + processInstance.getProcessDefinitionId()
-                + "\nprocess define name : " + processInstance.getProcessDefinitionName());
     }
 
     /**
@@ -152,10 +88,8 @@ public class LeaveProcessTest {
 //        String assignee = "李四";
 //        String assignee = "王五";
         List<Task> list = taskService.createTaskQuery() // 创建任务查询对象
-                // 查询条件，where条件
 //                .taskCandidateOrAssigned(assignee) // 指定个人任务查询，指定办理人
 //                .taskAssignee(assignee)
-                // 返回结果集
                 .list();
         if (list != null && list.size() > 0){
             for (Task task : list){
@@ -164,37 +98,22 @@ public class LeaveProcessTest {
         }
     }
 
-    protected void printTask(Task task){
-        System.out.println(signal + "\ntask id : " + task.getId()
-                + "\ntask name : " + task.getName()
-                + "\ntask create time : " + task.getCreateTime()
-                + "\ntask assignee : " + task.getAssignee()
-                + "\nprocess instance id : " + task.getProcessInstanceId()
-                + "\nexecution id : " + task.getExecutionId()
-                + "\ninstance define id : " + task.getProcessDefinitionId());
-    }
-
     /**
      * 根据流程实例查询任务
      */
     @Test
     public void testQueryCurrentTask() {
         TaskService taskService = processEngine.getTaskService();
-        Task task1 = taskService.createTaskQuery()
+        Task task = taskService.createTaskQuery()
                 .processInstanceId("5001") // 2501  5001
                 .singleResult();
-        printTask(task1);
-//        RuntimeService runtimeService = processEngine.getRuntimeService();
-//        ProcessInstance instance = runtimeService.createProcessInstanceQuery()
-//                .processInstanceId(task1.getProcessInstanceId())
-//                .singleResult();
-//        printProcessInstance(instance);
-//        String activityId = instance.getActivityId();
-//        System.out.println(signal + activityId);
+        printTask(task);
         RepositoryService repositoryService = processEngine.getRepositoryService();
-        ProcessDefinition definition = repositoryService.getProcessDefinition(task1.getProcessDefinitionId());
+        // 查询ProcessDefinitionEntiy对象
+        ProcessDefinition definition = repositoryService.getProcessDefinition(task.getProcessDefinitionId());
         ProcessDefinitionEntity entity = (ProcessDefinitionEntity) definition;
-        ActivityImpl activity = entity.findActivity(task1.getTaskDefinitionKey());
+        // 获取当前的活动
+        ActivityImpl activity = entity.findActivity(task.getTaskDefinitionKey());
         System.out.println(signal + activity);
     }
 
@@ -251,66 +170,5 @@ public class LeaveProcessTest {
         }
     }
 
-    /**
-     * 查询历史任务
-     */
-    @Test
-    public void testQueryHistoryTask() {
-        HistoryService historyService = processEngine.getHistoryService(); // 与历史相关的数据
-        String assignee = "张三";
-        List<HistoricTaskInstance> list = historyService.createHistoricTaskInstanceQuery()
-//                .taskAssignee(assignee)
-//                .taskOwner(assignee)
-//                .taskCandidateUser(assignee)
-                .list();
-//        if (list != null && list.size() > 0){
-//            for(HistoricTaskInstance instance : list){
-//                printHistoryTask(instance);
-//            }
-//        }
 
-        String processInstanceId = "2501";
-        List<HistoricIdentityLink> list1 = historyService.getHistoricIdentityLinksForProcessInstance(processInstanceId);
-        for (HistoricIdentityLink  link : list1){
-            System.out.println(signal + "\nuserId : " + link.getUserId()
-            + "\ntask type : " + link.getType()
-            + "\ntask id : " + link.getTaskId()
-            + "\nprocess instance id : " + link.getProcessInstanceId());
-        }
-
-    }
-
-    protected void printHistoryTask(HistoricTaskInstance instance){
-        System.out.println(signal + "\ntask id : " + instance.getId()
-                + "\ntask name : " + instance.getName()
-                + "\nprocess instance id : " + instance.getProcessInstanceId()
-                + "\ntask start time : " + instance.getStartTime()
-                + "\ntask end time : " + instance.getEndTime()
-                + "\ntask duration : " + instance.getDurationInMillis());
-    }
-
-    /**
-     * 查询历史流程实例
-     */
-    @Test
-    public void testQueryHistProcessInstance() {
-        HistoryService historyService = processEngine.getHistoryService();
-        String processInstanceId = "37501";
-        HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
-                .processInstanceId(processInstanceId)
-                .singleResult();
-        if (historicProcessInstance != null){
-            System.out.println(signal + "\nprocess instance id : " + historicProcessInstance.getId()
-            + "\nprocess start time : " + historicProcessInstance.getStartTime()
-            + "\nprocess end time : " + historicProcessInstance.getEndTime()
-            + "\nprocess duration : " + historicProcessInstance.getDurationInMillis());
-        }
-    }
-
-    protected void printHistoryVariableInstance(HistoricVariableInstance instance){
-        System.out.println(signal + "\nvariable id : "  + instance.getId()
-                + "\nprocess instance id : " + instance.getProcessInstanceId()
-                + "\nvariable name : " + instance.getVariableName()
-                + "\nvariable value: " + instance.getValue());
-    }
 }
