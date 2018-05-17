@@ -165,7 +165,7 @@ public class ProcessDefineTest extends LeaveProcessTest {
     @Test
     public void testDeleteProcessDefineByKey() {
         RepositoryService repositoryService = processEngine.getRepositoryService();
-        String key = "leaveProcess";
+        String key = "testCandidate";
         List<ProcessDefinition> list = repositoryService.createProcessDefinitionQuery()
                 .processDefinitionKey(key)
                 .list();

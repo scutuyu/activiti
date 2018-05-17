@@ -170,3 +170,81 @@ RuntimeService.getVariables(executionId)
 ```
 TaskService.getVariablesLocal(taskId)
 ```
+
+# assignee, candidate, owner的区别
+
+## `TaskService.claim(taskId, userId)`
+**前提** 假设某个任务节点的candidateUser属性被正确设置了候选人，假设有三个人用逗号分隔，如：`tuyu,ty,scutuyu`
+当流程走到该任务节点时，会在`act_ru_identitylink`表和`act_hi_identitylink`表分别新增6条数据，如下：
+```log
++-------+------+-----------+-------------+----------+----------+---------------+--------------+
+| ID_   | REV_ | GROUP_ID_ | TYPE_       | USER_ID_ | TASK_ID_ | PROC_INST_ID_ | PROC_DEF_ID_ |
++-------+------+-----------+-------------+----------+----------+---------------+--------------+
+| 52506 |    1 | NULL      | candidate   | scutuyu  | 52505    | NULL          | NULL         |
+| 52507 |    1 | NULL      | participant | scutuyu  | NULL     | 52501         | NULL         |
+| 52508 |    1 | NULL      | candidate   | tuyu     | 52505    | NULL          | NULL         |
+| 52509 |    1 | NULL      | participant | tuyu     | NULL     | 52501         | NULL         |
+| 52510 |    1 | NULL      | candidate   | ty       | 52505    | NULL          | NULL         |
+| 52511 |    1 | NULL      | participant | ty       | NULL     | 52501         | NULL         |
++-------+------+-----------+-------------+----------+----------+---------------+--------------+
+```
+
+当调用`TaskService.claim(taskId, userId)`方法去认领一个任务时，会修改三个表对应数据行的`assignee_`字段，这三个表分别是
+- ACT_HI_ACTINST
+- ACT_HI_TASKINST
+- ACT_RU_TASK
+
+如果是调用`claim(taskId, userId)`方法认领任务，那么这个认领是可以撤销的，即调用`claim(taskId, null)`,此时会将上述三张表的`assignee_`字段更新为null
+
+当然认领任务的`userId`也可以不是`(ty, tuyu, scutuyu)`中的其中一个，也可以是别的，如`'zhang'`
+此时，会在`act_ru_identitylink`表和`act_hi_identitylink`表分别新增一条数据，如下：
+```log
++-------+------+-----------+-------------+----------+----------+---------------+--------------+
+| ID_   | REV_ | GROUP_ID_ | TYPE_       | USER_ID_ | TASK_ID_ | PROC_INST_ID_ | PROC_DEF_ID_ |
++-------+------+-----------+-------------+----------+----------+---------------+--------------+
+| 57501 |    1 | NULL      | participant | zhang    | NULL     | 52501         | NULL         |
++-------+------+-----------+-------------+----------+----------+---------------+--------------+
+```
+此外，以下三张表对应数据行的`assignee_`字段会被修改为`'zhang''`，这三个表分别是
+- ACT_HI_ACTINST
+- ACT_HI_TASKINST
+- ACT_RU_TASK
+ 
+ **总之** 只要是通过`claim`方法认领的任务，都是可以撤回的
+ 
+ ## `TaskService.setAssignee(taskId, userId)`
+ **前提** 某个任务节点没有设置candidateUsers属性，也没有设置candidateGroups属性，也没有设置assignee属性，
+ 此时该任务的assignee_字段是null，如果调用了`TaskService.setAssignee(taskId, userId)`方法，
+ 就会在`act_hi_comment`表中新增一条数据，入下：
+ ```log
+ +-------+-------+-------------------------+----------+----------+---------------+-------------+-----------------+-----------+
+ | ID_   | TYPE_ | TIME_                   | USER_ID_ | TASK_ID_ | PROC_INST_ID_ | ACTION_     | MESSAGE_        | FULL_MSG_ |
+ +-------+-------+-------------------------+----------+----------+---------------+-------------+-----------------+-----------+
+ | 60002 | event | 2018-05-17 11:14:08.003 | NULL     | 52505    | NULL          | AddUserLink | li_|_assignee   | NULL      |
+ +-------+-------+-------------------------+----------+----------+---------------+-------------+-----------------+-----------+
+ ```
+ 同时也会在`act_ru_identitylink`表和`act_hi_identitylink`表分别新增一条数据，如下：
+ ```log
+ +-------+------+-----------+-------------+----------+----------+---------------+--------------+
+ | ID_   | REV_ | GROUP_ID_ | TYPE_       | USER_ID_ | TASK_ID_ | PROC_INST_ID_ | PROC_DEF_ID_ |
+ +-------+------+-----------+-------------+----------+----------+---------------+--------------+
+ | 60001 |    1 | NULL      | participant | li       | NULL     | 52501         | NULL         |
+ +-------+------+-----------+-------------+----------+----------+---------------+--------------+
+ ```
+ 此外，以下三张表对应数据行的`assignee_`字段会被修改为`'li''`，这三个表分别是
+- ACT_HI_ACTINST
+- ACT_HI_TASKINST
+- ACT_RU_TASK
+
+如果想把该任务的assignee_字段设置为其他人，比如`wang`,就会报错，下面两种方式都会报错
+```
+TaskService.claim(taskId, 'wang')
+
+or
+
+TaskService.setAssignee(taskId, 'wang')
+```
+错误信息如下：
+```log
+
+```
