@@ -15,8 +15,8 @@ Learn Activiti
 5. [完成任务](https://github.com/scutuyu/activiti/wiki/Complete-Task)
 
 # 流程变量与任务变量
-流程变量是是整个流程实例中所有节点都可以访问并修改的变量，修改会覆盖之前的值
-任务变量是某个任务节点独有的变量，整个流程实例中其他任务节点不能访问该变量，如果多个任务节点都有相同变量名的变量，他们不会覆盖，相互独立
+- 流程变量是是整个流程实例中所有节点都可以访问并修改的变量，修改会覆盖之前的值
+- 任务变量是某个任务节点独有的变量，整个流程实例中其他任务节点不能访问该变量，如果多个任务节点都有相同变量名的变量，他们不会覆盖，相互独立
 
 ## [设置流程变量](https://github.com/scutuyu/activiti/wiki/Set-prcessVariables)
 ## [设置任务变量](https://github.com/scutuyu/activiti/wiki/Set-TaskVariables)
