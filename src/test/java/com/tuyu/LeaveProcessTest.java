@@ -88,7 +88,7 @@ public class LeaveProcessTest extends BaseTest{
 //        String assignee = "李四";
 //        String assignee = "王五";
         List<Task> list = taskService.createTaskQuery() // 创建任务查询对象
-//                .taskCandidateOrAssigned(assignee) // 指定个人任务查询，指定办理人
+                .taskCandidateOrAssigned(assignee) // 指定个人任务查询，指定办理人
 //                .taskAssignee(assignee)
                 .list();
         if (list != null && list.size() > 0){
@@ -131,10 +131,6 @@ public class LeaveProcessTest extends BaseTest{
     @Test
     public void testCompleteTask() {
         TaskService taskService = processEngine.getTaskService();
-//        String taskId = "10005";
-//        String taskId = "12502";
-//        String taskId = "37505";
-//        String taskId = "40002";
         String taskId = "15002";
         taskService.complete(taskId);
         System.out.println(signal + "\ncomplete task, id is " + taskId);
