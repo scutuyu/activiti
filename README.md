@@ -4,7 +4,7 @@ Learn Activiti
 请假流程示例
 ---
 
-观看active
+[bilibi视频地址](https://www.bilibili.com/video/av7670054/index_13.html#page=9)
 
 # 工作流代码实现步骤
 
