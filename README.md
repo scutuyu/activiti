@@ -172,8 +172,141 @@ TaskService.getVariablesLocal(taskId)
 ```
 
 # assignee, candidate, owner的区别
+流程定义时，任务节点的candidateUsers被设置为${users}
+在发布流程定义时，设置流程变量users="ty,tuyu,scutuyu"
 
-## `TaskService.claim(taskId, userId)`
+- 第一次调用`TaskService.setAssignee(taskId, userId)`方法将`assignee_`字段设置为`zhang`成功,
+第二次调用`TaskService.setAssignee(taskId, userId)`方法将`assignee_`字段设置为`li`成功
+第三次调用`TaskSercice.claim(taskId, userId)`将`assignee_`字段设置为`wang`失败，报错如下：
+```log
+org.activiti.engine.ActivitiTaskAlreadyClaimedException: Task '70005' is already claimed by someone else.
+	at org.activiti.engine.impl.cmd.ClaimTaskCmd.execute(ClaimTaskCmd.java:41)
+	at org.activiti.engine.impl.cmd.ClaimTaskCmd.execute(ClaimTaskCmd.java:23)
+	at org.activiti.engine.impl.cmd.NeedsActiveTaskCmd.execute(NeedsActiveTaskCmd.java:59)
+	at org.activiti.engine.impl.interceptor.CommandInvoker.execute(CommandInvoker.java:24)
+	at org.activiti.engine.impl.interceptor.CommandContextInterceptor.execute(CommandContextInterceptor.java:57)
+	at org.activiti.engine.impl.interceptor.LogInterceptor.execute(LogInterceptor.java:37)
+	at org.activiti.engine.impl.cfg.CommandExecutorImpl.execute(CommandExecutorImpl.java:40)
+	at org.activiti.engine.impl.cfg.CommandExecutorImpl.execute(CommandExecutorImpl.java:35)
+	at org.activiti.engine.impl.TaskServiceImpl.claim(TaskServiceImpl.java:167)
+	at com.tuyu.AssigneeTest.testAssignee(AssigneeTest.java:165)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:497)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at com.intellij.junit4.JUnit4IdeaTestRunner.startRunnerWithArgs(JUnit4IdeaTestRunner.java:68)
+	at com.intellij.rt.execution.junit.IdeaTestRunner$Repeater.startRunnerWithArgs(IdeaTestRunner.java:51)
+	at com.intellij.rt.execution.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:242)
+	at com.intellij.rt.execution.junit.JUnitStarter.main(JUnitStarter.java:70)
+```
+第四次调用`TaskService.setAssignee(taskId, userId)`方法将`assignee_`字段设置为`wang2`成功
+第五次调用`TaskService.setAssignee(taskId, userId)`方法将`assignee_`字段设置为`null`成功
+第六次调用`TaskService.claim(taskId, userId)`方法将`assignee_`字段设置为`wang3`成功
+
+
+删除流程定义后，重新发布并启动流程实例
+
+- 第一次调用`TaskService.claim(taskId, userId)`将`assignee_`字段设置为`zhang`成功
+第二次调用`TaskService.claim(taskId, userId)`将`assignee_`字段设置为`li`报错，如下：
+```log
+org.activiti.engine.ActivitiTaskAlreadyClaimedException: Task '80005' is already claimed by someone else.
+	at org.activiti.engine.impl.cmd.ClaimTaskCmd.execute(ClaimTaskCmd.java:41)
+	at org.activiti.engine.impl.cmd.ClaimTaskCmd.execute(ClaimTaskCmd.java:23)
+	at org.activiti.engine.impl.cmd.NeedsActiveTaskCmd.execute(NeedsActiveTaskCmd.java:59)
+	at org.activiti.engine.impl.interceptor.CommandInvoker.execute(CommandInvoker.java:24)
+	at org.activiti.engine.impl.interceptor.CommandContextInterceptor.execute(CommandContextInterceptor.java:57)
+	at org.activiti.engine.impl.interceptor.LogInterceptor.execute(LogInterceptor.java:37)
+	at org.activiti.engine.impl.cfg.CommandExecutorImpl.execute(CommandExecutorImpl.java:40)
+	at org.activiti.engine.impl.cfg.CommandExecutorImpl.execute(CommandExecutorImpl.java:35)
+	at org.activiti.engine.impl.TaskServiceImpl.claim(TaskServiceImpl.java:167)
+	at com.tuyu.AssigneeTest.testClaim(AssigneeTest.java:178)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:497)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at com.intellij.junit4.JUnit4IdeaTestRunner.startRunnerWithArgs(JUnit4IdeaTestRunner.java:68)
+	at com.intellij.rt.execution.junit.IdeaTestRunner$Repeater.startRunnerWithArgs(IdeaTestRunner.java:51)
+	at com.intellij.rt.execution.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:242)
+	at com.intellij.rt.execution.junit.JUnitStarter.main(JUnitStarter.java:70)
+```
+如果二次调用`TaskService.claim(taskId, userId)`将`assignee_`字段设置为null，则成功，该操作表示撤销
+第三次调用`TaskService.claim(taskId, userId)`将`assignee_`字段设置为`li`成功
+第四次调用`TaskService.setAssignee(taskId, userId)`将`assignee_`字段设置为`wang`成功
+第五次调用`TaskService.setAssignee(taskId, userId)`将`assignee_`字段设置为`wang2`成功
+第六次调用`TaskService.claim(taskId, userId)`将`assignee_`字段设置为`wang3`报错，如下：
+```log
+org.activiti.engine.ActivitiTaskAlreadyClaimedException: Task '80005' is already claimed by someone else.
+	at org.activiti.engine.impl.cmd.ClaimTaskCmd.execute(ClaimTaskCmd.java:41)
+	at org.activiti.engine.impl.cmd.ClaimTaskCmd.execute(ClaimTaskCmd.java:23)
+	at org.activiti.engine.impl.cmd.NeedsActiveTaskCmd.execute(NeedsActiveTaskCmd.java:59)
+	at org.activiti.engine.impl.interceptor.CommandInvoker.execute(CommandInvoker.java:24)
+	at org.activiti.engine.impl.interceptor.CommandContextInterceptor.execute(CommandContextInterceptor.java:57)
+	at org.activiti.engine.impl.interceptor.LogInterceptor.execute(LogInterceptor.java:37)
+	at org.activiti.engine.impl.cfg.CommandExecutorImpl.execute(CommandExecutorImpl.java:40)
+	at org.activiti.engine.impl.cfg.CommandExecutorImpl.execute(CommandExecutorImpl.java:35)
+	at org.activiti.engine.impl.TaskServiceImpl.claim(TaskServiceImpl.java:167)
+	at com.tuyu.AssigneeTest.testClaim(AssigneeTest.java:185)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:497)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:47)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:44)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:271)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:70)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:50)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:238)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:63)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:236)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:53)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:229)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:309)
+	at org.junit.runner.JUnitCore.run(JUnitCore.java:160)
+	at com.intellij.junit4.JUnit4IdeaTestRunner.startRunnerWithArgs(JUnit4IdeaTestRunner.java:68)
+	at com.intellij.rt.execution.junit.IdeaTestRunner$Repeater.startRunnerWithArgs(IdeaTestRunner.java:51)
+	at com.intellij.rt.execution.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:242)
+	at com.intellij.rt.execution.junit.JUnitStarter.main(JUnitStarter.java:70)
+```
+- [assignee和owner](https://blog.csdn.net/cq1982/article/details/45560859)办理人和委托人
+```
+大致意思是，如果A签收了一个任务，即调用了TaskService.claim(taskId, "A"),此时该任务的assignee_字段的值就是A
+如果A将该任务委托给B处理，即调用了TaskService.delegateTask(taskId, "B"),此时任务的assignee_字段的值就是，而owner_字段的值就会A
+```
+
+## `TaskService.claim(taskId, userId)`认领（签收）任务数据库发生了哪些变化
 **前提** 假设某个任务节点的candidateUser属性被正确设置了候选人，假设有三个人用逗号分隔，如：`tuyu,ty,scutuyu`
 当流程走到该任务节点时，会在`act_ru_identitylink`表和`act_hi_identitylink`表分别新增6条数据，如下：
 ```log
@@ -210,9 +343,8 @@ TaskService.getVariablesLocal(taskId)
 - ACT_HI_TASKINST
 - ACT_RU_TASK
  
- **总之** 只要是通过`claim`方法认领的任务，都是可以撤回的
  
- ## `TaskService.setAssignee(taskId, userId)`
+ ## `TaskService.setAssignee(taskId, userId)`直接设置办理人，数据库发生了哪些变化
  **前提** 某个任务节点没有设置candidateUsers属性，也没有设置candidateGroups属性，也没有设置assignee属性，
  此时该任务的assignee_字段是null，如果调用了`TaskService.setAssignee(taskId, userId)`方法，
  就会在`act_hi_comment`表中新增一条数据，入下：
@@ -235,16 +367,3 @@ TaskService.getVariablesLocal(taskId)
 - ACT_HI_ACTINST
 - ACT_HI_TASKINST
 - ACT_RU_TASK
-
-如果想把该任务的assignee_字段设置为其他人，比如`wang`,就会报错，下面两种方式都会报错
-```
-TaskService.claim(taskId, 'wang')
-
-or
-
-TaskService.setAssignee(taskId, 'wang')
-```
-错误信息如下：
-```log
-
-```

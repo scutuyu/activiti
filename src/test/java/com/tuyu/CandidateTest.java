@@ -6,7 +6,6 @@ import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.runtime.ProcessInstance;
-import org.activiti.engine.task.Task;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -37,22 +36,13 @@ import java.util.Map;
  * //             佛祖保佑       永无BUG     永不修改                   //
  * ////////////////////////////////////////////////////////////////////
  * </pre>
- * tuyu于5/16/18祈祷...
- * 测试Assignee，candidate，owner之间的区别
+ * tuyu于5/18/18祈祷...
+ *
  * @author tuyu
- * @date 5/16/18
+ * @date 5/18/18
  * Stay Hungry, Stay Foolish.
  */
-public class AssigneeTest extends BaseTest {
-
-    /**
-     * 删除流程定义
-     */
-    @Test
-    public void testDeleteProcessDefine() {
-        String deploymentId = "77501";
-        super.deleteProcessDefine(deploymentId);
-    }
+public class CandidateTest extends BaseTest{
 
     /**
      * 发布candidate的流程定义
@@ -60,9 +50,9 @@ public class AssigneeTest extends BaseTest {
     @Test
     public void testDeployCandidate() {
         RepositoryService repositoryService = processEngine.getRepositoryService();
-        String resouce = "assignee.bpmn";
+        String resouce = "candidate.bpmn";
         Deployment deploy = repositoryService.createDeployment()
-                .name("测试Assignee")
+                .name("测试Candidate")
                 .addInputStream(resouce, ResourceUtil.getInputString(this.getClass(), resouce))
                 .deploy();
         printDeployment(deploy);
@@ -74,39 +64,65 @@ public class AssigneeTest extends BaseTest {
     @Test
     public void testStartProcessInstance() {
         RuntimeService runtimeService = processEngine.getRuntimeService();
-        ProcessInstance instance = runtimeService.startProcessInstanceByKey("testAssignee");
+        Map<String, Object> map = new HashMap<>(1);
+        map.put("users", "tuyu,ty,scutuyu");
+        ProcessInstance instance = runtimeService.startProcessInstanceByKey("testCandidate", map);
         printProcessInstance(instance);
     }
 
     /**
-     * bpmn文件有一个任务节点，该节点没有设置assignee，也没有设置candidate user和candidate group
-     * <p>通过TaskService.setAssignee(taskId, assigneeName)来设置Assignee</p>
-     * 调用setAssignee方法之后:
-     * <ul>
-     *     <li>act_hi_actinst表中对应活动记录的assignee字段被修改为设置的值</li>
-     *     <li>act_hi_identitylink表新增了一条记录，type_字段是participant, user_字段是设置的值，pro_inst_id_是流程实例id</li>
-     *     <li>act_ru_identitylink表新增了一条记录，type_字段是participant, user_字段是设置的值，pro_inst_id_是流程实例id</li>
-     *     <li>act_hi_comment表新增了一条记录，type_字段是event,task_id_是任务id，action_是AddUserLink,message_是tuyu_|_assignee</li>
-     *     <li>act_ru_task表中对应的任务记录的assignee字段被修改为设置的值</li>
-     *     <li>act_hi_task表中对应的任务记录的assignee字段被修改为设置的值</li>
-     * </ul>
+     * 删除流程定义
      */
     @Test
-    public void testSetAssignee() {
-        String taskId = "97504";
+    public void testDeleteProcessDefine() {
+        String deploymentId = "";
+        super.deleteProcessDefine(deploymentId);
+    }
+
+    /**
+     * 先调用setAssignee，再调用setAssignee和claim能否成功
+     */
+    @Test
+    public void testAssignee() {
+        String taskId = "70005";
 //        String userId = "zhang";
+//        String userId = "li";
+        String userId = "wang";
+        TaskService taskService = processEngine.getTaskService();
+//        taskService.setAssignee(taskId, userId);
+        taskService.claim(taskId, userId);
+        System.out.println(signal + userId + " is the assignee");
+    }
+
+    /**
+     * 先调用claim设置候选人之外的人，再调用claim设置候选人之外的人，最后调用setAssignee设置候选人之外的人能能否成功
+     */
+    @Test
+    public void testClaim() {
+        String taskId = "80005";
+//        String userId = "zhang";
+//        String userId = "li";
+//        String userId = null;
 //        String userId = "li";
 //        String userId = "wang";
 //        String userId = "wang2";
-//        String userId = null;
         String userId = "wang3";
         TaskService taskService = processEngine.getTaskService();
-//        taskService.setAssignee(taskId, userId);
 //        taskService.claim(taskId, userId);
 //        taskService.setAssignee(taskId, userId);
         taskService.claim(taskId, userId);
-        System.out.println(signal + userId + " is assignee");
+        System.out.println(signal + userId + " is the assignee");
     }
 
-
+    /**
+     * 添加组任务成员
+     */
+    @Test
+    public void testAddCandidate() {
+        TaskService taskService = processEngine.getTaskService();
+        String taskId = "80005";
+        String userId = "tuy";
+        taskService.addCandidateUser(taskId, userId);
+        System.out.println(signal + userId + " is the candidate of " + taskId);
+    }
 }

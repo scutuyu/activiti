@@ -70,6 +70,16 @@ public class BaseTest {
         System.out.println(signal + "process engine : " + processEngine);
     }
 
+    /**
+     * 删除流程定义
+     * @param deploymentId 流程定义发布id
+     */
+    protected void deleteProcessDefine(String deploymentId){
+        RepositoryService repositoryService = processEngine.getRepositoryService();
+        repositoryService.deleteDeployment(deploymentId, true);
+        System.out.println(signal + "has delete deployment, id is : " + deploymentId);
+    }
+
     // 资源文件
     protected void deploy(String name){
         RepositoryService repositoryService = processEngine.getRepositoryService(); // repositoryService 与流程定义和部署相关的service
