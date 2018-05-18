@@ -4,10 +4,12 @@ import com.tuyu.util.ResourceUtil;
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.ProcessEngineConfiguration;
 import org.activiti.engine.RepositoryService;
+import org.activiti.engine.RuntimeService;
 import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.history.HistoricTaskInstance;
 import org.activiti.engine.history.HistoricVariableInstance;
 import org.activiti.engine.repository.Deployment;
+import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
 import org.junit.Before;
@@ -127,6 +129,30 @@ public class BaseTest {
         printDeployment(deploy);
     }
 
+    /** 判断流程实例是否结束
+     * @param processInstanceId 流程实例id
+     * @return true，已经结束， false，还未结束
+     */
+    protected boolean processInstanceClosed(String processInstanceId){
+        RuntimeService runtimeService = processEngine.getRuntimeService();
+        Execution execution = runtimeService.createExecutionQuery()
+                .processInstanceId(processInstanceId)
+                .singleResult();
+        if (execution == null){
+            return true;
+        }else {
+            return false;
+        }
+    }
+
+    protected void printProcessInstanceClosed(boolean b, String processInstanceId){
+        if (b){
+            System.out.println(signal + processInstanceId + " has closed");
+        }else {
+            System.out.println(signal + processInstanceId + " has not closed");
+        }
+    }
+
     protected void printDeployment(Deployment deploy){
         System.out.println(signal + "\nprocess define id : " + deploy.getId()
                 + "\nprocess define name : " + deploy.getName());
@@ -187,5 +213,9 @@ public class BaseTest {
                 + "\nprocess instance start time : " + historicProcessInstance.getStartTime()
                 + "\nprocess instance end time : " + historicProcessInstance.getEndTime()
                 + "\nprocess instance duration : " + historicProcessInstance.getDurationInMillis());
+    }
+
+    protected void printCompleteTask(String taskId){
+        System.out.println(signal + " complete task id : " + taskId);
     }
 }

@@ -154,16 +154,9 @@ public class LeaveProcessTest extends BaseTest{
      */
     @Test
     public void testJudgeProcessInstanceClose() {
-        RuntimeService runtimeService = processEngine.getRuntimeService();
         String processInstanceId = "1";
-        Execution execution = runtimeService.createExecutionQuery()
-                .processInstanceId(processInstanceId)
-                .singleResult();
-        if (execution == null){
-            System.out.println(signal + "process has closed");
-        }else {
-            System.out.println(signal + "process has not closed");
-        }
+        boolean b = super.processInstanceClosed(processInstanceId);
+        printProcessInstanceClosed(b, processInstanceId);
     }
 
 

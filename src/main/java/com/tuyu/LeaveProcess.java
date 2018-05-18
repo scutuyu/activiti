@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
+ * 构造流程引擎
  * @author tuyu
  * @date 5/10/18
  * Stay Hungry, Stay Foolish.
@@ -33,6 +34,7 @@ public class LeaveProcess {
                 System.out.println(signal + "\nprocess engine : " + processEngine);
 
     }
+
 
 
 }

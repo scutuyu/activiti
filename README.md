@@ -24,5 +24,7 @@ Learn Activiti
 ## [获取任务变量](https://github.com/scutuyu/activiti/wiki/Get-TaskVariables)
 ## [assignee, candidate, owner的区别](https://github.com/scutuyu/activiti/wiki/assignee,-candidate,-owner%E7%9A%84%E5%8C%BA%E5%88%AB)
 
+# [不使用网关实现任务回退](https://github.com/scutuyu/activiti/wiki/Retroversion)
+
 
 
